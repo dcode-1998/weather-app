@@ -1,0 +1,10 @@
+.appContainer {
+    height: 100vh;
+    overflow: hidden; // prevents vertical scrolling
+  
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+  
