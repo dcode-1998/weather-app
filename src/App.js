@@ -6,9 +6,9 @@ const API_KEY = process.env.REACT_APP_OPENWEATHER_KEY;
 const DEFAULT_CITY = 'Bengaluru';
 
 function App() {
-  // const [location, setLocation] = useState(DEFAULT_CITY);
   const [displayName, setDisplayName] = useState(DEFAULT_CITY);
-  // const [coords, setCoords] = useState(null);
+  const [lastCoords, setLastCoords] = useState(null); 
+  const [lastCity, setLastCity] = useState(DEFAULT_CITY);   
   const [searchInput, setSearchInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -29,6 +29,7 @@ function App() {
 
     const initLocation = async () => {
       if (!navigator.geolocation) {
+        await fetchWeatherByCity(DEFAULT_CITY);
         setLoading(false);
         return;
       }
@@ -36,7 +37,7 @@ function App() {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
-          // setCoords({ lat: latitude, lon: longitude });
+          setLastCoords({ lat: latitude, lon: longitude });
 
           try {
             const geoRes = await axios.get(
@@ -48,12 +49,12 @@ function App() {
             setDisplayName(`Location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`);
           }
 
-          // Fetch weather + forecast in parallel using coords (only 2 calls!)
           await fetchWeatherByCoords(latitude, longitude);
           setLoading(false);
         },
-       async () => {
+        async () => {
           setError(`Location denied. Showing ${DEFAULT_CITY}.`);
+          setLastCity(DEFAULT_CITY);
           await fetchWeatherByCity(DEFAULT_CITY);
           setLoading(false);
         }
@@ -64,7 +65,18 @@ function App() {
   }, []);
 
   
+  useEffect(() => {
+    if (!hasLoaded.current) return;
+
+    if (lastCoords) {
+      fetchWeatherByCoords(lastCoords.lat, lastCoords.lon);
+    } else if (lastCity) {
+      fetchWeatherByCity(lastCity);
+    }
+  }, [units]);
+
   const fetchWeatherByCoords = async (lat, lon) => {
+    setLoading(true);
     try {
       const [currentRes, forecastRes] = await Promise.all([
         axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${units}&appid=${API_KEY}`),
@@ -75,8 +87,10 @@ function App() {
       const daily = forecastRes.data.list.filter((_, i) => i % 8 === 0).slice(0, 5);
       setForecast(daily);
       setError('');
-    } catch (err) {
+    } catch {
       setError('Failed to load weather');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,12 +106,13 @@ function App() {
       const daily = forecastRes.data.list.filter((_, i) => i % 8 === 0).slice(0, 5);
       setForecast(daily);
       setError('');
-    } catch (err) {
+    } catch {
       setError('City not found');
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (searchInput.length < 2) {
@@ -127,8 +142,8 @@ function App() {
   }, []);
 
   const selectCity = (city) => {
-    // setCoords(null);
-    // setLocation(city.name);
+    setLastCoords(null);
+    setLastCity(city.name);
     setDisplayName(`${city.name}, ${city.country}`);
     fetchWeatherByCity(city.name);
     setSearchInput('');
@@ -138,9 +153,9 @@ function App() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchInput.trim()) {
-      // setCoords(null);
       const city = searchInput.trim().split(',')[0];
-      // setLocation(city);
+      setLastCoords(null);
+      setLastCity(city);
       setDisplayName(searchInput.trim());
       fetchWeatherByCity(city);
       setSearchInput('');
@@ -153,7 +168,9 @@ function App() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        // setCoords({ lat: latitude, lon: longitude });
+        setLastCoords({ lat: latitude, lon: longitude });
+        setLastCity(null);
+
         try {
           const res = await axios.get(
             `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`
@@ -180,7 +197,7 @@ function App() {
           <button onClick={getCurrentLocation} className="location-btn">Current Location</button>
           <div className="right-controls">
             <button onClick={() => setUnits(units === 'metric' ? 'imperial' : 'metric')} className="unit-btn">
-              {units === 'metric' ? '°C' : '°F'}
+              {units === 'metric' ? 'Switch to °F' : 'Switch to °C'}
             </button>
             <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className="theme-btn">
               {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
@@ -204,9 +221,9 @@ function App() {
             <div className="suggestions-box">
               {suggestions.map((city) => (
                 <div key={`${city.lat}-${city.lon}`} className="suggestion-item" onClick={() => selectCity(city)}>
-                  <span className="(city-name">{city.name}</span>
-                  {city.state && <span className="state">{city.state}, </span>}
-                  <span className="country">{city.country}</span>
+                  <span className="city-name">{city.name}</span>
+                  {city.state && <span className="state">, {city.state}</span>}
+                  <span className="country">, {city.country}</span>
                 </div>
               ))}
             </div>
@@ -214,7 +231,7 @@ function App() {
         </div>
 
         {error && <div className="message error">{error}</div>}
-        {loading && <div className="message loading">Loading...</div>}
+        {loading && <div className="message loading">Loading weather...</div>}
 
         {weather && !loading && (
           <div className="weather-card">
