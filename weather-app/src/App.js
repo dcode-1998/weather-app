@@ -6,9 +6,9 @@ const API_KEY = process.env.REACT_APP_OPENWEATHER_KEY;
 const DEFAULT_CITY = 'Bengaluru';
 
 function App() {
-  const [location, setLocation] = useState(DEFAULT_CITY);
+  // const [location, setLocation] = useState(DEFAULT_CITY);
   const [displayName, setDisplayName] = useState(DEFAULT_CITY);
-  const [coords, setCoords] = useState(null);
+  // const [coords, setCoords] = useState(null);
   const [searchInput, setSearchInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -36,7 +36,7 @@ function App() {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
-          setCoords({ lat: latitude, lon: longitude });
+          // setCoords({ lat: latitude, lon: longitude });
 
           try {
             const geoRes = await axios.get(
@@ -127,8 +127,8 @@ function App() {
   }, []);
 
   const selectCity = (city) => {
-    setCoords(null);
-    setLocation(city.name);
+    // setCoords(null);
+    // setLocation(city.name);
     setDisplayName(`${city.name}, ${city.country}`);
     fetchWeatherByCity(city.name);
     setSearchInput('');
@@ -138,9 +138,9 @@ function App() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchInput.trim()) {
-      setCoords(null);
+      // setCoords(null);
       const city = searchInput.trim().split(',')[0];
-      setLocation(city);
+      // setLocation(city);
       setDisplayName(searchInput.trim());
       fetchWeatherByCity(city);
       setSearchInput('');
@@ -153,7 +153,7 @@ function App() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        setCoords({ lat: latitude, lon: longitude });
+        // setCoords({ lat: latitude, lon: longitude });
         try {
           const res = await axios.get(
             `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`
