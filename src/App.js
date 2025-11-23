@@ -199,9 +199,6 @@ function App() {
             <button onClick={() => setUnits(units === 'metric' ? 'imperial' : 'metric')} className="unit-btn">
               {units === 'metric' ? 'Switch to °F' : 'Switch to °C'}
             </button>
-            <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className="theme-btn">
-              {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-            </button>
           </div>
         </div>
 
@@ -240,7 +237,7 @@ function App() {
             </div>
             <div className="weather-main">
               <img src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`} alt="" className="weather-icon-small" />
-              <div className="temp-big">{Math.round(weather.main.temp)}°</div>
+              <div className="temp-big">{Math.round(weather.main.temp)}°{units!== 'metric' ? 'F' : 'C'}</div>
             </div>
             <p className="condition">
               {weather.weather[0].description.charAt(0).toUpperCase() + weather.weather[0].description.slice(1)}
